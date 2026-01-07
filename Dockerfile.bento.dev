@@ -1,0 +1,56 @@
+# ==============================================================================
+# Dockerfile para un ENTORNO DE DESARROLLO BENTOML (SIN SERVIDOR)
+# Te da un shell con todas las herramientas instaladas.
+# ==============================================================================
+
+# Usamos una imagen base de Python para tener un entorno limpio.
+FROM python:3.10-slim
+
+# 1. INSTALACIÓN DE DEPENDENCIAS DEL SISTEMA
+# Son necesarias para compilar Python (con pyenv) y para herramientas básicas.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    llvm \
+    libncurses5-dev \
+    xz-utils \
+    tk-dev \
+    libxml2-dev \
+    libxmlsec1-dev \
+    libffi-dev \
+    liblzma-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 2. CONFIGURACIÓN DEL DIRECTORIO DE TRABAJO
+# Aquí es donde se montará tu volumen de mlflow-projects
+WORKDIR /workspace
+
+# 3. INSTALACIÓN DE PYENV
+# Se instala en un directorio que no ensucie el workspace
+ENV PYENV_ROOT "/opt/pyenv"
+ENV PATH "$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+RUN curl https://pyenv.run | bash
+
+# 4. INSTALACIÓN DE PYTHON CON PYENV
+# Instalamos una versión específica y la activamos
+RUN pyenv install 3.10.13 && pyenv global 3.10.13
+
+# 5. INSTALACIÓN DE LIBRERÍAS DE PYTHON
+# Instalamos las herramientas que necesitas para trabajar
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir \
+    bentoml \
+    "torch>=2.0.0" \
+    transformers \
+    sentencepiece
+
+# 6. MANTENER EL CONTENEDOR CORRIENDO
+# Este comando simplemente mantiene el contenedor vivo para que puedas
+# entrar en él con 'docker exec'. No hace nada más.
+CMD ["tail", "-f", "/dev/null"]

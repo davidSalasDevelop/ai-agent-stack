@@ -4,7 +4,7 @@ services:
   # 1. The AI Brain (Ollama)
   ollama-agent:
     image: ollama/ollama:latest
-    container_name: ollama
+    container_name: ollama-agent
     restart: always
     ports:
       - "11434:11434"
@@ -16,7 +16,7 @@ services:
   # 2. The Logic/UI (Flowise)
   flowise-agent:
     image: flowiseai/flowise:latest
-    container_name: flowise
+    container_name: flowise-agent
     restart: always
     ports:
       - "4124:3000"
@@ -32,12 +32,12 @@ services:
   # 3. The "Auto-Installer" (Downloads qwen2.5:0.5b automatically)
   ollama-model-loader-agent:
     image: curlimages/curl
-    container_name: ollama_model_loader
+    container_name: ollama-model-loader-agent
     restart: on-failure
     networks:
       - ai_net
     depends_on:
-      - ollama
+      - ollama-agent
     command: >
       sh -c "echo '⏳ Waiting for Ollama to start...' &&
              sleep 10 &&

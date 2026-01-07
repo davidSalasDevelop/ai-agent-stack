@@ -51,6 +51,8 @@ services:
   bentoml_devbox:
     container_name: bentoml_dev_tools
     restart: always
+    ports:
+      - "4126:3000"
     build:
       context: .
       dockerfile: Dockerfile.bento.dev

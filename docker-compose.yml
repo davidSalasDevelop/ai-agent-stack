@@ -19,11 +19,11 @@ services:
     container_name: flowise
     restart: always
     ports:
-      - "4124:3000" # External Port 4124 -> Internal Port 3000
+      - "4124:3000"
     volumes:
       - flowise_data:/root/.flowise
     environment:
-      - PORT=3000 # Flowise still runs on 3000 internally
+      - PORT=3000
     networks:
       - ai_net
     depends_on:
@@ -38,7 +38,6 @@ services:
       - ai_net
     depends_on:
       - ollama
-    # Waits 10s for Ollama to be ready, then triggers the download
     command: >
       sh -c "echo '⏳ Waiting for Ollama to start...' &&
              sleep 10 &&
@@ -46,10 +45,35 @@ services:
              curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:0.5b\"}' &&
              echo '✅ Model download request sent! (Check Ollama logs for progress)'"
 
+  #-------------------------------------------------------------------------------
+  # 4. ¡NUEVO! CAJA DE DESARROLLO PARA BENTOML (SOLO HERRAMIENTAS)
+  #-------------------------------------------------------------------------------
+  bentoml_devbox:
+    container_name: bentoml_dev_tools
+    restart: always
+    
+    # Construye la imagen con nuestro Dockerfile de desarrollo.
+    build:
+      context: .
+      dockerfile: Dockerfile.bento.dev
+      
+    # ¡LA CLAVE! Monta tu carpeta de proyectos existente dentro del contenedor.
+    # Cualquier cambio que hagas en tu máquina en 'mlflow-projects' se reflejará
+    # dentro del contenedor en '/workspace' y viceversa.
+    volumes:
+      - ./mlflow-projects:/workspace
+      
+    # Conecta el contenedor a la red para que, si es necesario,
+    # pueda comunicarse con otros servicios como ollama.
+    networks:
+      - ai_net
+
+# Definición de todos los volúmenes que usamos en el stack.
 volumes:
   ollama_data:
   flowise_data:
 
+# Definición de la red compartida.
 networks:
   ai_net:
     driver: bridge

@@ -55,7 +55,7 @@ services:
       context: .
       dockerfile: Dockerfile.bento.dev
     volumes:
-      - ./mlflow-projects:/workspace
+      - /data/compose/94/mlflow-projects:/workspace
     networks:
       - ai_net
 

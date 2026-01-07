@@ -1,13 +1,12 @@
 # ==============================================================================
-# Dockerfile para un ENTORNO DE DESARROLLO BENTOML (SIN SERVIDOR)
-# Te da un shell con todas las herramientas instaladas.
+# Dockerfile para un ENTORNO DE DESARROLLO BENTOML (VERSIÓN CORREGIDA Y ROBUSTA)
 # ==============================================================================
 
 # Usamos una imagen base de Python para tener un entorno limpio.
 FROM python:3.10-slim
 
 # 1. INSTALACIÓN DE DEPENDENCIAS DEL SISTEMA
-# Son necesarias para compilar Python (con pyenv) y para herramientas básicas.
+# (Sin cambios, esto estaba bien)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
@@ -28,29 +27,33 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 2. CONFIGURACIÓN DEL DIRECTORIO DE TRABAJO
-# Aquí es donde se montará tu volumen de mlflow-projects
 WORKDIR /workspace
 
 # 3. INSTALACIÓN DE PYENV
-# Se instala en un directorio que no ensucie el workspace
+# (Sin cambios, esto estaba bien)
 ENV PYENV_ROOT "/opt/pyenv"
 ENV PATH "$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
 RUN curl https://pyenv.run | bash
 
 # 4. INSTALACIÓN DE PYTHON CON PYENV
-# Instalamos una versión específica y la activamos
+# (Sin cambios, esto estaba bien)
 RUN pyenv install 3.10.13 && pyenv global 3.10.13
 
-# 5. INSTALACIÓN DE LIBRERÍAS DE PYTHON
-# Instalamos las herramientas que necesitas para trabajar
+# 5. INSTALACIÓN DE LIBRERÍAS DE PYTHON (LA PARTE CORREGIDA)
+# Primero, actualizamos pip para asegurarnos de que tenemos la última versión.
 RUN pip install --no-cache-dir --upgrade pip
+
+# SEGUNDO, instalamos PyTorch para CPU de forma explícita.
+# Esto usa el índice oficial de PyTorch y descarga una versión mucho más ligera.
+# Es la causa más probable de tu error.
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# TERCERO, instalamos el resto de las librerías.
+# Ahora no hay caracteres especiales problemáticos.
 RUN pip install --no-cache-dir \
     bentoml \
-    "torch>=2.0.0" \
     transformers \
     sentencepiece
 
 # 6. MANTENER EL CONTENEDOR CORRIENDO
-# Este comando simplemente mantiene el contenedor vivo para que puedas
-# entrar en él con 'docker exec'. No hace nada más.
 CMD ["tail", "-f", "/dev/null"]

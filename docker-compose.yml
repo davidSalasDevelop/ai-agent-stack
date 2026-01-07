@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # 1. The AI Brain (Ollama)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ai_net
+
+  # 2. The Logic/UI (Flowise)
+  flowise:
+    image: flowiseai/flowise:latest
+    container_name: flowise
+    restart: always
+    ports:
+      - "4124:3000" # External Port 4124 -> Internal Port 3000
+    volumes:
+      - flowise_data:/root/.flowise
+    environment:
+      - PORT=3000 # Flowise still runs on 3000 internally
+    networks:
+      - ai_net
+    depends_on:
+      - ollama
+
+  # 3. The "Auto-Installer" (Downloads qwen2.5:0.5b automatically)
+  ollama-model-loader:
+    image: curlimages/curl
+    container_name: ollama_model_loader
+    restart: on-failure
+    networks:
+      - ai_net
+    depends_on:
+      - ollama
+    # Waits 10s for Ollama to be ready, then triggers the download
+    command: >
+      sh -c "echo '⏳ Waiting for Ollama to start...' &&
+             sleep 10 &&
+             echo '⬇️  Requesting model download (qwen2.5:0.5b)...' &&
+             curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:0.5b\"}' &&
+             echo '✅ Model download request sent! (Check Ollama logs for progress)'"
+
+volumes:
+  ollama_data:
+  flowise_data:
+
+networks:
+  ai_net:
+    driver: bridge

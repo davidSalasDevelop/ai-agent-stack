@@ -2,49 +2,49 @@ version: '3.8'
 
 services:
   # 1. The AI Brain (Ollama)
-  ollama:
+  ollama-agent:
     image: ollama/ollama:latest
-    container_name: ollama
+    container_name: ollama-agent
     restart: always
     ports:
       - "11434:11434"
     volumes:
-      # CORREGIDO: Usando tu volumen existente para Ollama
+      # CORREGIDO: Usando tu volumen externo existente
       - flowsie_ollama_data:/root/.ollama
     networks:
       - ai_net
 
   # 2. The Logic/UI (Flowise)
-  flowise:
+  flowise-agent:
     image: flowiseai/flowise:latest
-    container_name: flowise
+    container_name: flowise-agent
     restart: always
     ports:
       - "4124:3000"
     volumes:
-      # CORREGIDO: Usando tu volumen existente para Flowise
+      # CORREGIDO: Usando tu volumen externo existente
       - flowsie_flowise_data:/root/.flowise
     environment:
-      - PORT: 3000
+      - "PORT=3000"
     networks:
       - ai_net
     depends_on:
-      - ollama
+      - ollama-agent
 
   # 3. The "Auto-Installer" (Downloads qwen2.5:0.5b automatically)
-  ollama-model-loader:
+  ollama-model-loader-agent:
     image: curlimages/curl
-    container_name: ollama_model_loader
+    container_name: ollama-model-loader-agent
     restart: on-failure
     networks:
       - ai_net
     depends_on:
-      - ollama
+      - ollama-agent
     command: >
       sh -c "echo '⏳ Waiting for Ollama to start...' &&
              sleep 10 &&
              echo '⬇️  Requesting model download (qwen2.5:0.5b)...' &&
-             curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:0.5b\"}' &&
+             curl -X POST http://ollama-agent:11434/api/pull -d '{\"name\": \"qwen2.5:0.5b\"}' &&
              echo '✅ Model download request sent! (Check Ollama logs for progress)'"
 
   # 4. CAJA DE DESARROLLO PARA BENTOML (SOLO HERRAMIENTAS)
@@ -61,8 +61,7 @@ services:
 
 # Definición de todos los volúmenes que usamos en el stack.
 volumes:
-  # CORREGIDO: Declaramos los volúmenes como externos.
-  # Esto le dice a Docker Compose: "Estos volúmenes ya existen, no los crees, solo úsalos".
+  # CORREGIDO: Declaramos tus volúmenes existentes como "externos"
   flowsie_ollama_data:
     external: true
   flowsie_flowise_data:

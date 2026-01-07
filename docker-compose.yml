@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   # 1. The AI Brain (Ollama)
-  ollama:
+  ollama-agent:
     image: ollama/ollama:latest
     container_name: ollama
     restart: always
@@ -14,7 +14,7 @@ services:
       - ai_net
 
   # 2. The Logic/UI (Flowise)
-  flowise:
+  flowise-agent:
     image: flowiseai/flowise:latest
     container_name: flowise
     restart: always
@@ -30,7 +30,7 @@ services:
       - ollama
 
   # 3. The "Auto-Installer" (Downloads qwen2.5:0.5b automatically)
-  ollama-model-loader:
+  ollama-model-loader-agent:
     image: curlimages/curl
     container_name: ollama_model_loader
     restart: on-failure
